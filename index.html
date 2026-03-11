@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Research Taxonomy v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #08090d;
+      --surface: #11131a;
+      --border: #1e2130;
+      --text: #c8cdd8;
+      --text-dim: #5a6070;
+      --accent: #8b5cf6;
+      --accent-glow: rgba(139, 92, 246, 0.25);
+      --link: #60a5fa;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Subtle grid bg */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: rgba(8, 9, 13, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 14px;
+      z-index: 100;
+    }
+
+    .logo-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow), 0 0 24px var(--accent-glow);
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 12px var(--accent-glow); }
+      50% { box-shadow: 0 0 20px var(--accent-glow), 0 0 40px rgba(139,92,246,0.1); }
+    }
+
+    #header h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    #header .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--accent);
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    #header .hint {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    #header .hint kbd {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: var(--text);
+    }
+
+    svg { display: block; }
+
+    .link-line {
+      fill: none;
+      stroke-linecap: round;
+    }
+
+    .node-label {
+      font-family: 'DM Sans', sans-serif;
+      pointer-events: none;
+    }
+
+    .node-label-link {
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: fill 0.15s;
+    }
+
+    .node-label-link:hover {
+      fill: #93c5fd !important;
+    }
+
+    /* Tooltip */
+    #tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 0.15s;
+      max-width: 300px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    #tooltip.visible { opacity: 1; }
+
+    #tooltip .tt-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: #fff;
+    }
+
+    #tooltip .tt-org {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    #tooltip .tt-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--link);
+      margin-top: 6px;
+      word-break: break-all;
+      opacity: 0.7;
+    }
+
+    #tooltip .tt-hint {
+      font-size: 10px;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+
+    /* Legend */
+    #legend {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(17, 19, 26, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      z-index: 100;
+    }
+
+    #legend .legend-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+
+    .legend-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .legend-label {
+      font-size: 11px;
+      color: #8a90a0;
+    }
+
+    /* Stats */
+    #stats {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 12px;
+      z-index: 100;
+    }
+
+    .stat-card {
+      background: rgba(17, 19, 26, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      text-align: center;
+    }
+
+    .stat-card .stat-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .stat-card .stat-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 2px;
+    }
+
+    /* Search */
+    #search-box {
+      position: fixed;
+      top: 64px;
+      right: 20px;
+      z-index: 100;
+    }
+
+    #search-input {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px 8px 34px;
+      color: var(--text);
+      width: 220px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #search-input::placeholder { color: var(--text-dim); }
+    #search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    #search-box svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <div class="logo-dot"></div>
+  <h1>AI Research Taxonomy</h1>
+  <span class="badge">v2.0</span>
+  <span class="hint">
+    <kbd>Scroll</kbd> zoom &nbsp; <kbd>Drag</kbd> pan &nbsp; <kbd>Click</kbd> open links
+  </span>
+</div>
+
+<div id="search-box">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+  <input type="text" id="search-input" placeholder="Search nodes..." />
+</div>
+
+<div id="tooltip">
+  <div class="tt-name"></div>
+  <div class="tt-org"></div>
+  <div class="tt-url"></div>
+  <div class="tt-hint"></div>
+</div>
+
+<svg id="canvas"></svg>
+
+<div id="legend"></div>
+
+<div id="stats">
+  <div class="stat-card"><div class="stat-num" id="stat-nodes">0</div><div class="stat-label">Nodes</div></div>
+  <div class="stat-card"><div class="stat-num" id="stat-researchers">0</div><div class="stat-label">Researchers</div></div>
+  <div class="stat-card"><div class="stat-num" id="stat-orgs">0</div><div class="stat-label">Institutions</div></div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const data = {
+  name: "AI Research\nTaxonomy",
+  children: [
+    {
+      name: "Foundations & Theory",
+      children: [
+        { name: "Statistical ML", children: [
+          { name: "Michael Jordan", url: "https://people.eecs.berkeley.edu/~jordan/", org: "UC Berkeley" },
+          { name: "Larry Wasserman", url: "https://www.stat.cmu.edu/~larry/", org: "CMU" },
+        ]},
+        { name: "Optimization", children: [
+          { name: "Stephen Boyd", url: "https://web.stanford.edu/~boyd/", org: "Stanford" },
+          { name: "Sébastien Bubeck", url: "https://sbubeck.com/", org: "Microsoft Research" },
+        ]},
+        { name: "Causal Inference", children: [
+          { name: "Judea Pearl", url: "http://bayes.cs.ucla.edu/jp_home.html", org: "UCLA" },
+          { name: "Bernhard Schölkopf", url: "https://is.mpg.de/~bs", org: "Max Planck" },
+        ]},
+        { name: "Learning Theory", children: [
+          { name: "Sham Kakade", url: "https://sham.seas.harvard.edu/", org: "Harvard" },
+          { name: "Sanjoy Dasgupta", url: "https://cseweb.ucsd.edu/~dasgupta/", org: "UCSD" },
+        ]},
+      ],
+    },
+    {
+      name: "Model Architectures",
+      children: [
+        { name: "Transformers", children: [
+          { name: "Ashish Vaswani", url: "https://scholar.google.com/citations?user=oR9sCGYAAAAJ", org: "Google" },
+          { name: "Noam Shazeer", url: "https://scholar.google.com/citations?user=x-cJTDcAAAAJ", org: "Google" },
+        ]},
+        { name: "Post-Transformer / SSMs", children: [
+          { name: "Albert Gu", url: "https://scholar.google.com/citations?user=DVhRMGEAAAAJ", org: "CMU" },
+          { name: "Tri Dao", url: "https://tridao.me/", org: "Together AI" },
+        ]},
+        { name: "Generative Models", children: [
+          { name: "Ian Goodfellow", url: "https://www.iangoodfellow.com/", org: "DeepMind" },
+          { name: "Yang Song", url: "https://yang-song.net/", org: "OpenAI" },
+        ]},
+        { name: "Graph Neural Networks", children: [
+          { name: "Jure Leskovec", url: "https://cs.stanford.edu/people/jure/", org: "Stanford" },
+          { name: "Michael Bronstein", url: "https://www.cs.ox.ac.uk/people/michael.bronstein/", org: "Oxford" },
+        ]},
+      ],
+    },
+    {
+      name: "Learning Methods\n& Alignment",
+      children: [
+        { name: "Reinforcement Learning", children: [
+          { name: "Pieter Abbeel", url: "https://people.eecs.berkeley.edu/~pabbeel/", org: "UC Berkeley" },
+          { name: "Sergey Levine", url: "https://people.eecs.berkeley.edu/~svlevine/", org: "UC Berkeley" },
+        ]},
+        { name: "Self-Supervised Learning", children: [
+          { name: "Yann LeCun", url: "https://yann.lecun.com/", org: "Meta AI" },
+          { name: "Kaiming He", url: "https://kaiminghe.github.io/", org: "MIT" },
+        ]},
+        { name: "RLHF & Alignment", children: [
+          { name: "Jan Leike", url: "https://jan.leike.name/", org: "Anthropic" },
+          { name: "Paul Christiano", url: "https://paulfchristiano.com/", org: "ARC" },
+        ]},
+        { name: "Continual Learning", children: [
+          { name: "Razvan Pascanu", url: "https://sites.google.com/view/razp", org: "DeepMind" },
+        ]},
+      ],
+    },
+    {
+      name: "Perception\n& Multimodal",
+      children: [
+        { name: "Computer Vision", children: [
+          { name: "Fei-Fei Li", url: "https://profiles.stanford.edu/fei-fei-li", org: "Stanford" },
+          { name: "Alexei Efros", url: "https://people.eecs.berkeley.edu/~efros/", org: "UC Berkeley" },
+        ]},
+        { name: "NLP", children: [
+          { name: "Chris Manning", url: "https://nlp.stanford.edu/~manning/", org: "Stanford" },
+          { name: "Percy Liang", url: "https://cs.stanford.edu/~pliang/", org: "Stanford" },
+        ]},
+        { name: "Multimodal Fusion", children: [
+          { name: "Douwe Kiela", url: "https://douwekiela.github.io/", org: "Contextual AI" },
+          { name: "Jitendra Malik", url: "https://people.eecs.berkeley.edu/~malik/", org: "UC Berkeley" },
+        ]},
+      ],
+    },
+    {
+      name: "Autonomous &\nEmbodied Systems",
+      children: [
+        { name: "LLM Agents", children: [
+          { name: "Shunyu Yao", url: "https://ysymyth.github.io/", org: "OpenAI" },
+          { name: "Harrison Chase", url: "https://www.linkedin.com/in/harrison-chase-961287118/", org: "LangChain" },
+        ]},
+        { name: "Robotics", children: [
+          { name: "Chelsea Finn", url: "https://ai.stanford.edu/~cbfinn/", org: "Stanford" },
+          { name: "Dieter Fox", url: "https://homes.cs.washington.edu/~fox/", org: "UW / NVIDIA" },
+        ]},
+        { name: "World Models", children: [
+          { name: "Yann LeCun", url: "https://yann.lecun.com/", org: "Meta AI" },
+          { name: "David Ha", url: "https://otoro.net/", org: "Sakana AI" },
+        ]},
+      ],
+    },
+    {
+      name: "Systems &\nInfrastructure",
+      children: [
+        { name: "Training Infrastructure", children: [
+          { name: "Jeff Dean", url: "https://research.google/people/jeff/", org: "Google" },
+          { name: "James Bradbury", url: "https://scholar.google.com/citations?user=xKOiBGcAAAAJ", org: "Google" },
+        ]},
+        { name: "Inference Optimization", children: [
+          { name: "Song Han", url: "https://songhan.mit.edu/", org: "MIT" },
+          { name: "Tri Dao", url: "https://tridao.me/", org: "Together AI" },
+        ]},
+        { name: "AI Hardware", children: [
+          { name: "Bill Dally", url: "https://research.nvidia.com/person/bill-dally", org: "NVIDIA" },
+        ]},
+      ],
+    },
+    {
+      name: "Trustworthy AI\n& Governance",
+      children: [
+        { name: "Interpretability", children: [
+          { name: "Chris Olah", url: "https://colah.github.io/", org: "Anthropic" },
+          { name: "Been Kim", url: "https://beenkim.github.io/", org: "Google DeepMind" },
+        ]},
+        { name: "Safety Evaluation", children: [
+          { name: "Dan Hendrycks", url: "https://people.eecs.berkeley.edu/~hendrycks/", org: "CAIS" },
+          { name: "Ethan Perez", url: "https://ethanperez.net/", org: "Anthropic" },
+        ]},
+        { name: "Fairness & Bias", children: [
+          { name: "Timnit Gebru", url: "https://www.dair-institute.org/", org: "DAIR Institute" },
+          { name: "Rediet Abebe", url: "https://www.cs.cornell.edu/~red/", org: "UC Berkeley" },
+        ]},
+      ],
+    },
+    {
+      name: "AI for Science",
+      children: [
+        { name: "Drug Discovery", children: [
+          { name: "Bharath Ramsundar", url: "https://rbharath.github.io/", org: "DeepChem" },
+          { name: "Regina Barzilay", url: "https://www.regina.csail.mit.edu/", org: "MIT" },
+        ]},
+        { name: "Climate Modeling", children: [
+          { name: "Priya Donti", url: "https://priyadonti.com/", org: "MIT" },
+        ]},
+        { name: "Materials Science", children: [
+          { name: "Ekin Dogus Cubuk", url: "https://scholar.google.com/citations?user=cs2iG6EAAAAJ", org: "Google DeepMind" },
+        ]},
+        { name: "Mathematics", children: [
+          { name: "Christian Szegedy", url: "https://scholar.google.com/citations?user=3QeF7mAAAAAJ", org: "xAI" },
+          { name: "Pushmeet Kohli", url: "https://sites.google.com/site/pusaborern/", org: "DeepMind" },
+        ]},
+      ],
+    },
+  ],
+};
+
+const branchColors = [
+  "#8b5cf6", "#3b82f6", "#06b6d4", "#10b981",
+  "#f59e0b", "#ef4444", "#ec4899", "#6366f1",
+];
+
+// Count stats
+const root = d3.hierarchy(data);
+const allNodes = root.descendants();
+const researchers = allNodes.filter(d => d.data.url);
+const orgs = [...new Set(researchers.map(d => d.data.org))];
+document.getElementById('stat-nodes').textContent = allNodes.length;
+document.getElementById('stat-researchers').textContent = researchers.length;
+document.getElementById('stat-orgs').textContent = orgs.length;
+
+// Build legend
+const legendEl = document.getElementById('legend');
+legendEl.innerHTML = '<div class="legend-title">Branches</div>';
+data.children.forEach((child, i) => {
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  item.innerHTML = `
+    <div class="legend-dot" style="background:${branchColors[i]}"></div>
+    <span class="legend-label">${child.name.replace(/\n/g, ' ')}</span>
+  `;
+  legendEl.appendChild(item);
+});
+
+// Main render
+const W = window.innerWidth;
+const H = window.innerHeight;
+const svg = d3.select('#canvas').attr('width', W).attr('height', H);
+const g = svg.append('g');
+
+// Zoom
+const zoomBehavior = d3.zoom()
+  .scaleExtent([0.2, 4])
+  .on('zoom', (e) => g.attr('transform', e.transform));
+svg.call(zoomBehavior);
+
+// Layout
+const treeLayout = d3.tree()
+  .size([H - 120, W - 420])
+  .separation((a, b) => (a.parent === b.parent ? 1 : 1.4));
+
+// Assign colors
+root.descendants().forEach(d => {
+  if (d.depth === 0) d._color = '#a78bfa';
+  else if (d.depth === 1) d._color = branchColors[d.parent.children.indexOf(d) % branchColors.length];
+  else d._color = d.parent._color;
+});
+
+treeLayout(root);
+
+// Initial transform
+svg.call(zoomBehavior.transform, d3.zoomIdentity.translate(200, 52).scale(0.82));
+
+// Draw links
+g.selectAll('.link-line')
+  .data(root.links())
+  .join('path')
+  .attr('class', 'link-line')
+  .attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x))
+  .attr('stroke', d => d.target._color)
+  .attr('stroke-opacity', 0.25)
+  .attr('stroke-width', d => Math.max(1, 5 - d.target.depth * 1.2));
+
+// Draw nodes
+const nodeG = g.selectAll('.node')
+  .data(root.descendants())
+  .join('g')
+  .attr('class', 'node')
+  .attr('transform', d => `translate(${d.y},${d.x})`)
+  .attr('data-name', d => d.data.name.toLowerCase());
+
+// Circles with glow for root
+nodeG.append('circle')
+  .attr('r', d => d.depth === 0 ? 10 : d.children ? 5 : 3.5)
+  .attr('fill', d => d._color)
+  .attr('stroke', d => d.depth === 0 ? '#c4b5fd' : 'none')
+  .attr('stroke-width', 2)
+  .style('filter', d => d.depth === 0 ? 'drop-shadow(0 0 8px rgba(139,92,246,0.6))' : 'none');
+
+// Labels — researchers are clickable links
+nodeG.each(function(d) {
+  const el = d3.select(this);
+  const isLink = !!d.data.url;
+  const label = d.data.name + (d.data.org ? ` — ${d.data.org}` : '');
+  const dx = d.children ? -12 : 10;
+  const anchor = d.children ? 'end' : 'start';
+
+  if (d.depth === 0) {
+    // Root: multi-line
+    const lines = d.data.name.split('\n');
+    lines.forEach((line, i) => {
+      el.append('text')
+        .attr('class', 'node-label')
+        .attr('x', 0)
+        .attr('y', -24 + i * 16)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', 14)
+        .attr('font-weight', 700)
+        .attr('fill', '#e9d5ff')
+        .text(line);
+    });
+    return;
+  }
+
+  if (d.depth === 1) {
+    const lines = d.data.name.split('\n');
+    lines.forEach((line, i) => {
+      el.append('text')
+        .attr('class', 'node-label')
+        .attr('dx', dx)
+        .attr('dy', lines.length > 1 ? -6 + i * 15 : 4)
+        .attr('text-anchor', anchor)
+        .attr('font-size', 12)
+        .attr('font-weight', 600)
+        .attr('fill', '#d1d5db')
+        .text(line);
+    });
+    return;
+  }
+
+  const textEl = el.append('text')
+    .attr('class', isLink ? 'node-label-link' : 'node-label')
+    .attr('dx', dx)
+    .attr('dy', 4)
+    .attr('text-anchor', anchor)
+    .attr('font-size', d.depth === 2 ? 11 : 10)
+    .attr('font-weight', d.depth === 2 ? 500 : 400)
+    .attr('fill', isLink ? '#93c5fd' : '#9ca3af')
+    .attr('text-decoration', isLink ? 'underline' : 'none')
+    .text(label);
+
+  if (isLink) {
+    textEl.style('text-decoration-color', 'rgba(147,197,253,0.3)');
+  }
+});
+
+// Tooltip
+const tooltip = document.getElementById('tooltip');
+const ttName = tooltip.querySelector('.tt-name');
+const ttOrg = tooltip.querySelector('.tt-org');
+const ttUrl = tooltip.querySelector('.tt-url');
+const ttHint = tooltip.querySelector('.tt-hint');
+
+nodeG.on('mouseenter', function(event, d) {
+  if (!d.data.url && !d.data.org) return;
+  ttName.textContent = d.data.name;
+  ttOrg.textContent = d.data.org || '';
+  ttUrl.textContent = d.data.url || '';
+  ttHint.textContent = d.data.url ? 'Click to open profile →' : '';
+  tooltip.classList.add('visible');
+  tooltip.style.left = (event.clientX + 16) + 'px';
+  tooltip.style.top = (event.clientY - 10) + 'px';
+});
+
+nodeG.on('mousemove', function(event) {
+  tooltip.style.left = (event.clientX + 16) + 'px';
+  tooltip.style.top = (event.clientY - 10) + 'px';
+});
+
+nodeG.on('mouseleave', function() {
+  tooltip.classList.remove('visible');
+});
+
+// Click to open URL
+nodeG.on('click', function(event, d) {
+  if (d.data.url) window.open(d.data.url, '_blank', 'noopener');
+});
+
+// Search
+const searchInput = document.getElementById('search-input');
+searchInput.addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  nodeG.each(function(d) {
+    const el = d3.select(this);
+    const name = (d.data.name + (d.data.org || '')).toLowerCase();
+    if (!q) {
+      el.attr('opacity', 1);
+    } else if (name.includes(q)) {
+      el.attr('opacity', 1);
+    } else {
+      el.attr('opacity', 0.08);
+    }
+  });
+
+  g.selectAll('.link-line').attr('stroke-opacity', q ? 0.06 : 0.25);
+});
+
+// Resize
+window.addEventListener('resize', () => {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  svg.attr('width', w).attr('height', h);
+});
+</script>
+</body>
+</html>
